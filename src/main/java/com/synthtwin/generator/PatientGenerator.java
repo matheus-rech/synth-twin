@@ -380,12 +380,24 @@ public class PatientGenerator {
             int labCount = 5 + random.nextInt(6);
             Set<Integer> usedLabs = new HashSet<>();
             for (int i = 0; i < labCount && i < MedicalData.LAB_TESTS.length; i++) {
-                int idx;
+                int idx = -1;
                 int attempts = 0;
-                do {
-                    idx = random.nextInt(MedicalData.LAB_TESTS.length);
+
+                // Try to find a lab index that hasn't been used yet, up to 30 attempts
+                while (attempts < 30) {
+                    int candidate = random.nextInt(MedicalData.LAB_TESTS.length);
                     attempts++;
-                } while (usedLabs.contains(idx) && attempts < 30);
+                    if (!usedLabs.contains(candidate)) {
+                        idx = candidate;
+                        break;
+                    }
+                }
+
+                // If no new index was found within the attempt limit, stop generating labs
+                if (idx == -1) {
+                    break;
+                }
+
                 usedLabs.add(idx);
 
                 MedicalData.LabTestData labTest = MedicalData.LAB_TESTS[idx];
