@@ -93,7 +93,7 @@ Each XML document includes: Problems · Medications · Allergies · Immunization
 | `patients.csv` | id, first\_name, last\_name, birth\_date, death\_date, gender, address\_\*, race, ethnicity |
 | `encounters.csv` | id, patient\_id, type, date, reason\_code, reason\_description, provider\_name, cost, duration\_minutes |
 | `conditions.csv` | id, patient\_id, code, description, category, onset\_date, abatement\_date, clinical\_status |
-| `medications.csv` | id, patient\_id, code, description, start\_date, stop\_date, reason\_code, dosage\_instructions |
+| `medications.csv` | id, patient\_id, code, description, start\_date, stop\_date, reason\_code, reason\_description, dosage\_instructions |
 | `allergies.csv` | id, patient\_id, code, description, type, category, severity, onset\_date, reaction |
 | `vaccinations.csv` | id, patient\_id, cvx\_code, description, date, dose\_number, series |
 | `lab\_results.csv` | id, patient\_id, encounter\_id, loinc\_code, description, value, unit, date, reference\_range\_\*, interpretation |

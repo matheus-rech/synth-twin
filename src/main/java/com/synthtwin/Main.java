@@ -18,7 +18,16 @@ public class Main {
         System.out.println("  SynthTwin - Synthetic Patient Data Generator");
         System.out.println("========================================");
 
-        Options options = Options.parse(args);
+        Options options;
+        try {
+            options = Options.parse(args);
+        } catch (Exception e) {
+            // Help was printed or arguments were invalid — exit gracefully
+            if (e instanceof IllegalArgumentException) {
+                System.err.println(e.getMessage());
+            }
+            return;
+        }
 
         System.out.println("Configuration:");
         System.out.println("  Population : " + options.getPopulation());

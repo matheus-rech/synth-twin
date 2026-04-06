@@ -10,11 +10,14 @@ import org.w3c.dom.Document;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CcdaExporterTest {
+
+    private static final LocalDate FIXED_DATE = LocalDate.of(2025, 1, 1);
 
     @Test
     void testExport_createsXmlFiles(@TempDir Path tempDir) throws Exception {
@@ -22,7 +25,7 @@ class CcdaExporterTest {
         options.setPopulation(3);
         options.setSeed(42L);
 
-        PatientGenerator generator = new PatientGenerator(42L);
+        PatientGenerator generator = new PatientGenerator(42L, FIXED_DATE);
         List<Patient> patients = generator.generatePatients(options);
 
         CcdaExporter exporter = new CcdaExporter();
@@ -43,7 +46,7 @@ class CcdaExporterTest {
         options.setPopulation(1);
         options.setSeed(42L);
 
-        PatientGenerator generator = new PatientGenerator(42L);
+        PatientGenerator generator = new PatientGenerator(42L, FIXED_DATE);
         List<Patient> patients = generator.generatePatients(options);
 
         CcdaExporter exporter = new CcdaExporter();

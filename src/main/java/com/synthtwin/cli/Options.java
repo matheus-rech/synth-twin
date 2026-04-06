@@ -6,6 +6,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Thrown when the user passes {@code -h/--help}.
+ */
+class HelpRequestedException extends RuntimeException {
+    HelpRequestedException() { super("Help requested"); }
+}
+
 public class Options {
     private int population;
     private String state;
@@ -26,17 +33,23 @@ public class Options {
         this.seed = System.currentTimeMillis();
     }
 
+    /**
+     * Parse CLI arguments into an {@link Options} instance.
+     *
+     * @throws IllegalArgumentException if the arguments cannot be parsed
+     * @throws HelpRequestedException   if {@code -h/--help} was passed
+     */
     public static Options parse(String[] args) {
         org.apache.commons.cli.Options cliOptions = buildCliOptions();
         CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
 
         try {
             CommandLine cmd = parser.parse(cliOptions, args);
 
             if (cmd.hasOption("h")) {
+                HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("synth-twin", cliOptions);
-                System.exit(0);
+                throw new HelpRequestedException();
             }
 
             Options options = new Options();
@@ -73,10 +86,7 @@ public class Options {
             return options;
 
         } catch (ParseException e) {
-            System.err.println("Error parsing arguments: " + e.getMessage());
-            formatter.printHelp("synth-twin", cliOptions);
-            System.exit(1);
-            return null;
+            throw new IllegalArgumentException("Error parsing arguments: " + e.getMessage(), e);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.synthtwin.data;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
 
@@ -35,7 +35,7 @@ public class DemographicData {
         "Price", "Alvarez", "Castillo", "Sanders", "Patel", "Myers", "Long", "Ross", "Foster", "Jimenez"
     };
 
-    public static final Map<String, String[]> STATES = new HashMap<>();
+    public static final Map<String, String[]> STATES = new LinkedHashMap<>();
 
     static {
         STATES.put("MA", new String[]{"Boston", "Worcester", "Springfield", "Cambridge", "Lowell"});

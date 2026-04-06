@@ -1,7 +1,4 @@
 target/
-*.class
-*.jar
-!*-jar-with-dependencies.jar
 output/
 .idea/
 *.iml

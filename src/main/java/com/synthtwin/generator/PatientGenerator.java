@@ -12,9 +12,15 @@ import java.util.*;
 public class PatientGenerator {
 
     private final Random random;
+    private final LocalDate referenceDate;
 
     public PatientGenerator(long seed) {
+        this(seed, LocalDate.now());
+    }
+
+    public PatientGenerator(long seed, LocalDate referenceDate) {
         this.random = new Random(seed);
+        this.referenceDate = referenceDate;
     }
 
     public List<Patient> generatePatients(Options options) {
@@ -25,9 +31,16 @@ public class PatientGenerator {
         return patients;
     }
 
+    /**
+     * Generate a deterministic UUID from the seeded Random instance.
+     */
+    private String nextId() {
+        return new UUID(random.nextLong(), random.nextLong()).toString();
+    }
+
     public Patient generatePatient(Options options) {
         Patient patient = new Patient();
-        patient.setId(UUID.randomUUID().toString());
+        patient.setId(nextId());
 
         // Gender
         String gender = options.getGender() != null ? options.getGender() : (random.nextBoolean() ? "M" : "F");
@@ -42,10 +55,15 @@ public class PatientGenerator {
         patient.setLastName(DemographicData.LAST_NAMES[random.nextInt(DemographicData.LAST_NAMES.length)]);
 
         // Birth date - generate within age range
-        LocalDate today = LocalDate.now();
-        int minAge = options.getMinAge();
-        int maxAge = Math.min(options.getMaxAge(), 110);
-        int ageYears = minAge + random.nextInt(Math.max(1, maxAge - minAge + 1));
+        LocalDate today = referenceDate;
+        int minAge = Math.max(0, options.getMinAge());
+        int maxAge = Math.min(110, Math.max(0, options.getMaxAge()));
+        if (minAge > maxAge) {
+            int tmp = minAge;
+            minAge = maxAge;
+            maxAge = tmp;
+        }
+        int ageYears = minAge + random.nextInt(maxAge - minAge + 1);
         LocalDate birthDate = today.minusYears(ageYears).minusDays(random.nextInt(365));
         patient.setBirthDate(birthDate);
 
@@ -123,7 +141,7 @@ public class PatientGenerator {
                 MedicalData.CodedConcept concept = MedicalData.CHRONIC_CONDITIONS[idx];
 
                 Condition condition = new Condition();
-                condition.setId(UUID.randomUUID().toString());
+                condition.setId(nextId());
                 condition.setCode(concept.code());
                 condition.setDescription(concept.display());
                 condition.setCategory("chronic");
@@ -143,7 +161,7 @@ public class PatientGenerator {
         for (int i = 0; i < acuteCount; i++) {
             MedicalData.CodedConcept concept = MedicalData.ACUTE_CONDITIONS[random.nextInt(MedicalData.ACUTE_CONDITIONS.length)];
             Condition condition = new Condition();
-            condition.setId(UUID.randomUUID().toString());
+            condition.setId(nextId());
             condition.setCode(concept.code());
             condition.setDescription(concept.display());
             condition.setCategory("acute");
@@ -167,7 +185,7 @@ public class PatientGenerator {
                 for (int i = 0; i < medCount; i++) {
                     MedicalData.CodedConcept medConcept = MedicalData.MEDICATIONS[random.nextInt(MedicalData.MEDICATIONS.length)];
                     Medication med = new Medication();
-                    med.setId(UUID.randomUUID().toString());
+                    med.setId(nextId());
                     med.setCode(medConcept.code());
                     med.setDescription(medConcept.display());
                     // Start after condition onset
@@ -193,7 +211,7 @@ public class PatientGenerator {
             MedicalData.AllergyData allergyData = MedicalData.ALLERGIES[idx];
 
             Allergy allergy = new Allergy();
-            allergy.setId(UUID.randomUUID().toString());
+            allergy.setId(nextId());
             allergy.setCode(allergyData.code());
             allergy.setDescription(allergyData.display());
             allergy.setType("allergy");
@@ -222,7 +240,7 @@ public class PatientGenerator {
                 LocalDate vaccDate = birthDate.plusMonths(2L * dose).plusDays(random.nextInt(14));
                 if (vaccDate.isAfter(endDate)) break;
                 Vaccination vacc = new Vaccination();
-                vacc.setId(UUID.randomUUID().toString());
+                vacc.setId(nextId());
                 vacc.setCvxCode(cvxCode);
                 vacc.setDescription(vData.fullName());
                 vacc.setDate(vaccDate);
@@ -240,7 +258,7 @@ public class PatientGenerator {
                     LocalDate vaccDate = birthDate.plusYears(yr).withMonth(10).withDayOfMonth(1 + random.nextInt(30));
                     if (vaccDate.isAfter(endDate)) break;
                     Vaccination vacc = new Vaccination();
-                    vacc.setId(UUID.randomUUID().toString());
+                    vacc.setId(nextId());
                     vacc.setCvxCode("141");
                     vacc.setDescription(fluData.fullName());
                     vacc.setDate(vaccDate);
@@ -258,7 +276,7 @@ public class PatientGenerator {
                 LocalDate vaccDate = birthDate.plusYears(65).plusDays(random.nextInt(365));
                 if (!vaccDate.isAfter(endDate)) {
                     Vaccination vacc = new Vaccination();
-                    vacc.setId(UUID.randomUUID().toString());
+                    vacc.setId(nextId());
                     vacc.setCvxCode("133");
                     vacc.setDescription(ppsv.fullName());
                     vacc.setDate(vaccDate);
@@ -275,7 +293,7 @@ public class PatientGenerator {
                     LocalDate vaccDate = birthDate.plusYears(50).plusMonths((long)(dose - 1) * 6 + random.nextInt(3));
                     if (vaccDate.isAfter(endDate)) break;
                     Vaccination vacc = new Vaccination();
-                    vacc.setId(UUID.randomUUID().toString());
+                    vacc.setId(nextId());
                     vacc.setCvxCode("187");
                     vacc.setDescription(shingles.fullName());
                     vacc.setDate(vaccDate);
@@ -288,14 +306,18 @@ public class PatientGenerator {
         if (age >= 12) {
             MedicalData.VaccineData covid = findVaccine("207");
             if (covid != null) {
-                // Give COVID vaccine in 2021
+                // Give COVID vaccine in 2021, but not before the patient turns 12
                 LocalDate covidStart = LocalDate.of(2021, 3, 1);
-                if (!covidStart.isBefore(birthDate) && !covidStart.isAfter(endDate)) {
+                LocalDate covidEligibilityStart = birthDate.plusYears(12);
+                if (covidStart.isBefore(covidEligibilityStart)) {
+                    covidStart = covidEligibilityStart;
+                }
+                if (!covidStart.isAfter(endDate)) {
                     for (int dose = 1; dose <= 2; dose++) {
                         LocalDate vaccDate = covidStart.plusDays((long)(dose - 1) * 28 + random.nextInt(7));
                         if (vaccDate.isAfter(endDate)) break;
                         Vaccination vacc = new Vaccination();
-                        vacc.setId(UUID.randomUUID().toString());
+                        vacc.setId(nextId());
                         vacc.setCvxCode("207");
                         vacc.setDescription(covid.fullName());
                         vacc.setDate(vaccDate);
@@ -352,7 +374,7 @@ public class PatientGenerator {
 
     private Encounter createEncounter(String type, LocalDate date) {
         Encounter encounter = new Encounter();
-        encounter.setId(UUID.randomUUID().toString());
+        encounter.setId(nextId());
         encounter.setType(type);
         encounter.setDate(date);
 
@@ -402,7 +424,7 @@ public class PatientGenerator {
 
                 MedicalData.LabTestData labTest = MedicalData.LAB_TESTS[idx];
                 LabResult result = new LabResult();
-                result.setId(UUID.randomUUID().toString());
+                result.setId(nextId());
                 result.setLoincCode(labTest.loincCode());
                 result.setDescription(labTest.description());
                 result.setUnit(labTest.unit());
